@@ -30,6 +30,8 @@ class Timer(threading.Thread):
 
 class syncPlay:
     def __init__(self, window):
+        self.domain = 'http://adildsw.pythonanywhere.com/'
+        
         self.window = window
         self.window.title("syncPlay")
         
@@ -38,9 +40,9 @@ class syncPlay:
         self.window.config(menu = self.menubar)
         fileMenu = tkinter.Menu(self.menubar, tearoff=0)
         fileMenu.add_command(label="Open", underline=0, command=self.openFile)
+        fileMenu.add_command(label="Server", underline=0, command=self.openServerPanel)
         fileMenu.add_command(label="Exit", underline=1, command=_quit)
-        self.menubar.add_cascade(label="File", menu=fileMenu)
-        self.menubar.add_command(label="Server", underline=0, command=self.openServerPanel)
+        self.menubar.add_cascade(label="Menu", underline=0, menu=fileMenu)
         
         #Video Panel
         self.player = None
@@ -99,7 +101,8 @@ class syncPlay:
     
     def syncServerState(self):
         try:
-            data = requests.post(url='http://adildsw.pythonanywhere.com/syncplay')
+            url = self.domain + 'syncplay'
+            data = requests.post(url)
             data = data.json()
             fileNameServ = data[0]['filename']
             checksumServ = data[0]['checksum']
@@ -145,7 +148,8 @@ class syncPlay:
     
     def serverWatcher(self):
         try:
-            data = requests.post(url='http://adildsw.pythonanywhere.com/syncplay')
+            url = self.domain + 'syncplay'
+            data = requests.post(url)
             data = data.json()
             stateServ = data[0]['state']
             timeServ = data[0]['time']
@@ -210,7 +214,7 @@ class syncPlay:
             self.pauseMedia()
     
     def playMedia(self):
-        url = 'http://adildsw.pythonanywhere.com/syncplay/play'
+        url = self.domain + 'syncplay/play'
         try:
             requests.post(url)
         except:
@@ -219,14 +223,14 @@ class syncPlay:
     def pauseMedia(self):
         pauseTime = int(self.timeSlider.get())
         params = {'time': pauseTime}
-        url = 'http://adildsw.pythonanywhere.com/syncplay/pause'
+        url = self.domain + 'syncplay/pause'
         try:
             requests.get(url, params=params)
         except:
             self.statusBar.configure(text="ERROR: Cannot connect to server")
             
     def stopMedia(self):
-        url = 'http://adildsw.pythonanywhere.com/syncplay/stop'
+        url = self.domain + 'syncplay/stop'
         try:
             requests.get(url)
         except:
@@ -277,7 +281,7 @@ class syncPlay:
             messagebox.showerror("Error", "Target time greater than total media time")
         else:
             params = {'time': int(destMilli)}
-            url = 'http://adildsw.pythonanywhere.com/syncplay/pause'
+            url = self.domain + 'syncplay/pause'
             try:
                 requests.get(url, params=params)
                 self.statusBar.configure(text="Server: Media is paused")
@@ -295,6 +299,8 @@ class syncPlay:
 
 class syncPlayServer:
     def __init__(self):
+        self.domain = 'http://adildsw.pythonanywhere.com/'
+        
         self.window = tkinter.Tk()
         self.window.title("syncPlay Server Panel")
         
@@ -332,7 +338,8 @@ class syncPlayServer:
     
     def readFromServer(self):
         try:
-            data = requests.post(url='http://adildsw.pythonanywhere.com/syncplay')
+            url = self.domain + 'syncplay'
+            data = requests.post(url)
             data = data.json()
             self.fileNameLbl.configure(text=data[0]['filename'])
             self.checksumLbl.configure(text=data[0]['checksum'])
@@ -347,7 +354,8 @@ class syncPlayServer:
     
     def resetServer(self):
         try:
-            requests.post(url='http://adildsw.pythonanywhere.com/syncplay/reset')
+            url = self.domain + 'syncplay/reset'
+            requests.post(url)
             messagebox.showinfo("Success", "Server Reset Successful")
         except:
             messagebox.showerror("Error", "Could not reset server")
@@ -362,7 +370,8 @@ class syncPlayServer:
             checksum = _getHash(str(os.path.join(dirname, filename)))
             try:
                 params = {"filename": filename, "checksum": checksum, "state": "pause", "time": 0}
-                requests.get(url='http://adildsw.pythonanywhere.com/syncplay/load', params=params)
+                url = self.domain + 'syncplay/load'
+                requests.get(url, params=params)
                 messagebox.showinfo("Success", "Info Loaded to Server Successfully")
             except:
                 messagebox.showerror("Error", "Could not load to server")
