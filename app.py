@@ -192,6 +192,8 @@ class syncPlay:
             self.player.set_media(self.Media)
             if platform.system() == 'Windows':
                 self.player.set_hwnd(self.videoPanel.winfo_id())
+            elif platform.system() == 'Darwin':
+                self.player.set_nsobject(self.videoPanel.winfo_id())
             else:
                 self.player.set_xwindow(self.videoPanel.winfo_id())
             self.checksum = _getHash(str(os.path.join(dirname, self.filename)))
@@ -372,10 +374,19 @@ def _getSyncPlayWindow():
         _getSyncPlayWindow.window= tkinter.Tk()
     return _getSyncPlayWindow.window
     
-def _getHash(filepath):
-    with open(filepath, 'rb') as file_to_check:
-        data = file_to_check.read()    
-        return hashlib.md5(data).hexdigest()
+def _getHash(filepath, blocksize=2**20):
+    fileSize = str(os.path.getsize(filepath))
+    return hashlib.md5(fileSize.encode()).hexdigest()
+
+def _getHashOriginal(filepath, blocksize=2**20):
+    m = hashlib.md5()
+    with open(filepath, 'rb') as f:
+        while True:
+            buf = f.read(blocksize)
+            if not buf:
+                break
+            m.update( buf )
+    return m.hexdigest()
     
 def _quit():
     MsgBox = messagebox.askquestion("Exit", "Are you sure?")
